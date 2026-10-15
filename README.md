@@ -1,4 +1,4 @@
-# AION2 Auras
+# tjcd
 
 Cooldown overlay for AION 2 Global. Reads the game's network traffic through Npcap, like the DPS meters, and never touches the game client.
 
@@ -12,7 +12,7 @@ cargo run --release
 
 Start it before logging in, or change zone once. Unlock it from the tray icon to move it.
 
-`--demo` shows fake casts without the game. `--trace` logs every cast to `%APPDATA%\com.taylorjohannsen.aion2auras\auras.log`.
+`--demo` shows fake casts without the game. `--trace` logs every cast to `%APPDATA%\com.taylorjohannsen.tjcd\tjcd.log`.
 
 ## Credits
 

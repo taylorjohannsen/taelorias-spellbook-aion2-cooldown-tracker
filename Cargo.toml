@@ -1,5 +1,5 @@
 [package]
-name = "aion2-auras"
+name = "tjcd"
 version = "0.1.0"
 edition = "2021"
 description = "Cooldown and buff overlay for AION 2"

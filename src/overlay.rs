@@ -51,7 +51,7 @@ pub fn epoch_ms() -> u64 {
 
 impl Overlay {
     pub fn new(app: AppHandle, dir: PathBuf) -> Self {
-        let log = File::create(dir.join("auras.log")).ok();
+        let log = File::create(dir.join("tjcd.log")).ok();
         Self(Arc::new(Inner {
             app,
             dir,

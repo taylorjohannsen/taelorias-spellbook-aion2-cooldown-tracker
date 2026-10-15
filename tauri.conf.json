@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "AION2 Auras",
+  "productName": "tjcd",
   "version": "0.1.0",
-  "identifier": "com.taylorjohannsen.aion2auras",
+  "identifier": "com.taylorjohannsen.tjcd",
   "build": {
     "frontendDist": "./ui"
   },
@@ -11,7 +11,7 @@
     "windows": [
       {
         "label": "overlay",
-        "title": "AION2 Auras",
+        "title": "tjcd",
         "width": 760,
         "height": 160,
         "center": true,

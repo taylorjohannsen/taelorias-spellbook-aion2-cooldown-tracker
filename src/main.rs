@@ -67,7 +67,7 @@ fn tray(app: &tauri::App, overlay: Overlay) -> tauri::Result<()> {
     let toggle = MenuItem::with_id(app, "toggle", "Unlock", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&toggle, &quit])?;
-    let mut builder = TrayIconBuilder::new().tooltip("AION2 Auras").menu(&menu);
+    let mut builder = TrayIconBuilder::new().tooltip("tjcd").menu(&menu);
     if let Some(icon) = app.default_window_icon() {
         builder = builder.icon(icon.clone());
     }
