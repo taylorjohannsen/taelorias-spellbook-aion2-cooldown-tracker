@@ -2,6 +2,8 @@
 
 Cooldown and buff overlay for AION 2 Global. Reads the game's network traffic through Npcap, like the DPS meters, and never touches the game client.
 
+<img src="docs/overlay.webp" width="540" alt="The cooldown bar with buff trackers above it, counting down in a fight">
+
 ## Install
 
 1. Install [Npcap](https://npcap.com/#download).
@@ -11,9 +13,15 @@ tjcd updates itself when it starts.
 
 ## Use
 
-Start it before logging in, or change zone or use a couple of skills once you're in. Unlock it from the settings or the tray icon to move it.
+Start it before logging in, or change zone or use a couple of skills once you're in.
 
-Settings, from the tray or the gear in the corner of the screen, change the bar's direction, the size and corners of each box, which abilities show in what order, and whether the bar shows only in combat or in dungeons. The game doesn't share its keybinds, so each ability's key is set there too. The Buffs tab tracks buffs on you, as boxes or bars, in a window of their own, with a list for each class. The overlay hides while another window is in front of the game, unless that's turned off.
+<img src="docs/gameplay.webp" width="720" alt="tjcd's bar and buff trackers under a Sorcerer at a training dummy">
+
+Open the settings with the gear in the bottom-left corner of your screen, which shows while the game is in front, or from tjcd's tray icon. To move the bar or the buffs window, click Unlock at the top of the settings, drag them where you want, then lock them again.
+
+<img src="docs/settings.gif" width="420" alt="The settings window, resizing the boxes and switching the bar to vertical">
+
+The settings change the bar's direction, the size and corners of each box, which abilities show in what order, and whether the bar shows only in combat or in dungeons. The game doesn't share its keybinds, so each ability's key is set there too, and the ✦ next to it makes the ability shine gold when it comes off cooldown. The Buffs tab tracks buffs on you, as boxes or bars, in a window of their own, with a list for each class. The overlay hides while another window is in front of the game, unless that's turned off.
 
 ## Build
 
