@@ -1,7 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "tjcd",
-  "identifier": "tjcd",
+  "productName": "Spellbook",
+  "mainBinaryName": "Spellbook",
+  "identifier": "spellbook",
   "build": {
     "frontendDist": "./ui"
   },
@@ -10,7 +11,7 @@
     "windows": [
       {
         "label": "overlay",
-        "title": "tjcd",
+        "title": "Spellbook",
         "width": 760,
         "height": 160,
         "center": true,
@@ -33,7 +34,7 @@
       "nsis"
     ],
     "createUpdaterArtifacts": true,
-    "publisher": "tjcd",
+    "publisher": "Spellbook",
     "icon": [
       "icons/icon.ico",
       "icons/icon.png"

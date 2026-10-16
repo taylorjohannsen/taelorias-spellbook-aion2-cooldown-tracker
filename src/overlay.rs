@@ -19,7 +19,7 @@ use crate::tracker::Update;
 const MAP_FILE: &str = "map.json";
 /// How many recent buffs the settings window offers to track
 const SEEN_BUFFS: usize = 40;
-/// Kept between sessions, so tjcd learns which skills buff us
+/// Kept between sessions, so Spellbook learns which skills buff us
 const SEEN_FILE: &str = "seen-buffs.json";
 /// Shorter ones, like the game's 200 ms movement states, would bury the rest
 const MIN_SEEN_MS: u32 = 1_000;
@@ -93,7 +93,7 @@ pub fn epoch_ms() -> u64 {
 
 impl Overlay {
     pub fn new(app: AppHandle, dir: PathBuf) -> Self {
-        let log = File::create(dir.join("tjcd.log")).ok();
+        let log = File::create(dir.join("spellbook.log")).ok();
         let map: Option<u32> = std::fs::read(dir.join(MAP_FILE)).ok().and_then(|b| serde_json::from_slice(&b).ok());
         let seen_buffs = std::fs::read(dir.join(SEEN_FILE)).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default();
         let view = View { dungeon: map.is_some_and(is_dungeon), seen_buffs, ..Default::default() };

@@ -1,6 +1,6 @@
 [package]
 name = "tjcd"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Cooldown and buff overlay for AION 2"
 license = "MIT"

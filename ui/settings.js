@@ -125,12 +125,12 @@ const npcapProblem = () => /npcap/i.test(view.error);
 // what the waiting screen says, until we know which character is ours
 function waiting() {
   if (/npcap (isn't installed|is missing)/i.test(view.error)) {
-    return ['Npcap is needed', "tjcd reads the game's traffic through Npcap, the free driver the DPS meters use. Install it, then restart tjcd."];
+    return ['Npcap is needed', "Spellbook reads the game's traffic through Npcap, the free driver the DPS meters use. Install it, then restart Spellbook."];
   }
   if (npcapProblem()) return ["Npcap isn't working", `${view.error}. Installing Npcap again usually fixes it.`];
   if (view.error) return ["Can't read the game", view.error];
-  if (!view.traffic) return ['Waiting for AION 2', 'Start the game. tjcd finds it on its own.'];
-  return ['Found AION 2', 'Change zone, or use a couple of skills, so tjcd knows which character is yours.'];
+  if (!view.traffic) return ['Waiting for AION 2', 'Start the game. Spellbook finds it on its own.'];
+  return ['Found AION 2', 'Change zone, or use a couple of skills, so Spellbook knows which character is yours.'];
 }
 
 function showView(next) {
@@ -275,7 +275,7 @@ $('#buff-warning').addEventListener('change', (e) => {
 $('#get-npcap').addEventListener('click', () => invoke('open_npcap_download'));
 $('#restart').addEventListener('click', () => invoke('restart'));
 $('#open-logs').addEventListener('click', () => invoke('open_log_folder'));
-invoke('version').then((version) => ($('#version').textContent = `tjcd ${version}`));
+invoke('version').then((version) => ($('#version').textContent = `Spellbook ${version}`));
 
 // lives in Windows rather than the settings, which says whether it took
 const autostart = $('#autostart');

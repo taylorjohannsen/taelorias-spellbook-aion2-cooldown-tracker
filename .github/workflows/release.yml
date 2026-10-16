@@ -40,7 +40,7 @@ jobs:
         run: |
           $tag = "${{ github.ref_name }}"
           $version = $tag.TrimStart("v")
-          $name = "tjcd_${version}_x64-setup.exe"
+          $name = "Spellbook_${version}_x64-setup.exe"
           $setup = "target/release/bundle/nsis/$name"
           @{
             version = $version
@@ -52,4 +52,4 @@ jobs:
               }
             }
           } | ConvertTo-Json -Depth 4 | Set-Content latest.json -Encoding utf8NoBOM
-          gh release create $tag $setup latest.json --title "tjcd $version" --generate-notes
+          gh release create $tag $setup latest.json --title "Spellbook $version" --generate-notes

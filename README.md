@@ -1,4 +1,4 @@
-# tjcd
+# Taeloria's Spellbook
 
 Cooldown and buff overlay for AION 2 Global. Reads the game's network traffic through Npcap, like the DPS meters, and never touches the game client.
 
@@ -7,17 +7,17 @@ Cooldown and buff overlay for AION 2 Global. Reads the game's network traffic th
 ## Install
 
 1. Install [Npcap](https://npcap.com/#download).
-2. Download `tjcd_x.y.z_x64-setup.exe` from the [latest release](https://github.com/taylorjohannsen/tjcd/releases/latest) and run it. Windows may warn that it's from an unknown publisher: click More info, then Run anyway.
+2. Download `Spellbook_x.y.z_x64-setup.exe` from the [latest release](https://github.com/taylorjohannsen/tjcd/releases/latest) and run it. Windows may warn that it's from an unknown publisher: click More info, then Run anyway.
 
-tjcd updates itself when it starts.
+Spellbook updates itself when it starts. If you had it from when it was called tjcd, the update moves your settings over and removes tjcd.
 
 ## Use
 
 Start it before logging in, or change zone or use a couple of skills once you're in.
 
-<img src="docs/gameplay.webp" width="720" alt="tjcd's bar and buff trackers under a Sorcerer at a training dummy">
+<img src="docs/gameplay.webp" width="720" alt="Spellbook's bar and buff trackers under a Sorcerer at a training dummy">
 
-Open the settings with the gear in the bottom-left corner of your screen, which shows while the game is in front, or from tjcd's tray icon. To move the bar or the buffs window, click Unlock at the top of the settings, drag them where you want, then lock them again.
+Open the settings with the gear in the bottom-left corner of your screen, which shows while the game is in front, or from Spellbook's tray icon. To move the bar or the buffs window, click Unlock at the top of the settings, drag them where you want, then lock them again.
 
 <img src="docs/settings.gif" width="420" alt="The settings window, resizing the boxes and switching the bar to vertical">
 
@@ -31,11 +31,11 @@ Needs [Npcap](https://npcap.com/#download) and [Rust](https://rustup.rs).
 cargo run --release
 ```
 
-`--demo` shows fake casts without the game. `--trace` logs every cast to `%APPDATA%\tjcd\tjcd.log`.
+`--demo` shows fake casts without the game. `--trace` logs every cast to `%APPDATA%\spellbook\spellbook.log`.
 
 ## Disclaimer
 
-tjcd isn't affiliated with NCSOFT. It only reads network traffic, like the DPS meters, and never touches the game. Use it at your own risk.
+Spellbook isn't affiliated with NCSOFT. It only reads network traffic, like the DPS meters, and never touches the game. Use it at your own risk.
 
 ## Credits
 

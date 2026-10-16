@@ -5,10 +5,12 @@ mod capture;
 mod demo;
 mod focus;
 mod frames;
+mod legacy;
 mod net;
 mod npcap;
 mod overlay;
 mod packets;
+mod registry;
 mod settings;
 mod shell;
 mod skills;
@@ -125,7 +127,7 @@ fn open_npcap_download() {
     shell::open(NPCAP_DOWNLOAD);
 }
 
-/// Where tjcd.log and the settings live, for bug reports
+/// Where spellbook.log and the settings live, for bug reports
 #[tauri::command]
 fn open_log_folder(overlay: State<Overlay>) {
     shell::open(&overlay.dir().to_string_lossy());
@@ -150,7 +152,7 @@ fn main() {
 
     // release builds have no console to show why they stopped
     std::panic::set_hook(Box::new(|info| {
-        let _ = std::fs::write(std::env::temp_dir().join("tjcd-crash.log"), info.to_string());
+        let _ = std::fs::write(std::env::temp_dir().join("spellbook-crash.log"), info.to_string());
         eprintln!("{info}");
     }));
 
@@ -159,10 +161,15 @@ fn main() {
         .invoke_handler(tauri::generate_handler![snapshot, class_skills, settings, default_settings, save_settings, fit_window, set_unlocked, set_clickable, autostart, set_autostart, version, open_npcap_download, open_log_folder, restart, show_settings])
         .setup(move |app| {
             let dir = app.path().app_config_dir()?;
+            legacy::move_data(&dir);
             std::fs::create_dir_all(&dir)?;
             // everything the pages ask for first, since the overlay's page is already loading
             let overlay = Overlay::new(app.handle().clone(), dir.clone());
             app.manage(overlay.clone());
+            if !cfg!(debug_assertions) {
+                let overlay = overlay.clone();
+                std::thread::spawn(move || legacy::take_over().into_iter().for_each(|line| overlay.log(line)));
+            }
             app.manage(Mutex::new(Settings::load(&dir)));
             if let Some(loadout) = skills::load_cached(&dir) {
                 // started mid-session there's no loading screen to ask NC for the classes
@@ -204,7 +211,7 @@ fn main() {
 }
 
 /// An installed copy updates itself from the latest GitHub release when it
-/// starts: the new installer closes tjcd, updates it, and opens it again.
+/// starts: the new installer closes Spellbook, updates it, and opens it again.
 /// Builds from source are left alone.
 fn update(app: &AppHandle) {
     if cfg!(debug_assertions) {
@@ -258,7 +265,7 @@ fn tray(app: &tauri::App) -> tauri::Result<()> {
     let toggle = MenuItem::with_id(app, "toggle", "Unlock", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&settings, &toggle, &quit])?;
-    let mut builder = TrayIconBuilder::new().tooltip("tjcd").menu(&menu);
+    let mut builder = TrayIconBuilder::new().tooltip("Taeloria's Spellbook").menu(&menu);
     if let Some(icon) = app.default_window_icon() {
         builder = builder.icon(icon.clone());
     }
@@ -295,7 +302,7 @@ fn set_lock(app: &AppHandle, unlocked: bool) {
 /// bar. It starts out under the bar, whose page hasn't sized it yet.
 fn buffs_window(app: &tauri::App, dir: &Path) -> tauri::Result<()> {
     let window = WebviewWindowBuilder::new(app, BUFFS_WINDOW, WebviewUrl::App("buffs.html".into()))
-        .title("tjcd buffs")
+        .title("Spellbook buffs")
         .inner_size(1.0, 1.0)
         // its page sizes it, smaller than Windows allows by default
         .min_inner_size(1.0, 1.0)
@@ -345,7 +352,7 @@ fn place_unmoved(app: &AppHandle) {
 /// the space above the taskbar, which the game covers anyway.
 fn launcher(app: &tauri::App) -> tauri::Result<()> {
     let window = WebviewWindowBuilder::new(app, LAUNCHER_WINDOW, WebviewUrl::App("launcher.html".into()))
-        .title("tjcd")
+        .title("Spellbook")
         .inner_size(LAUNCHER_SIZE, LAUNCHER_SIZE)
         // Windows makes new windows at least title-bar sized, and only listens to
         // a smaller minimum once the window exists, hence the resize below
@@ -382,7 +389,7 @@ fn open_settings(app: &AppHandle) {
     let app = app.clone();
     std::thread::spawn(move || {
         let built = WebviewWindowBuilder::new(&app, SETTINGS_WINDOW, WebviewUrl::App("settings.html".into()))
-            .title("tjcd settings")
+            .title("Taeloria's Spellbook")
             .inner_size(620.0, 900.0)
             .min_inner_size(520.0, 600.0)
             .build();
