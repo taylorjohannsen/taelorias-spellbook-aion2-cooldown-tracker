@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>tjcd</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button {
+      width: 30px;
+      height: 30px;
+      padding: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 50%;
+      background: rgba(13, 15, 19, 0.6);
+      color: #c9cfdb;
+      cursor: pointer;
+      opacity: 0.55;
+      transition: opacity 0.15s, background 0.15s, transform 0.1s;
+    }
+
+    button:hover {
+      background: rgba(27, 31, 40, 0.92);
+      color: #fff;
+      opacity: 1;
+    }
+
+    button:active {
+      transform: scale(0.92);
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.3s;
+    }
+
+    button:hover svg {
+      transform: rotate(45deg);
+    }
+  </style>
+</head>
+<body>
+  <button id="open" title="tjcd settings" aria-label="Open tjcd settings">
+    <svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+  </button>
+  <script src="bar.js"></script>
+  <script>
+    const { invoke } = window.__TAURI__.core;
+    const { listen } = window.__TAURI__.event;
+    const open = document.getElementById('open');
+    let view = { focused: false, unlocked: false };
+    let settings = { onlyFocused: true };
+    let clickable = true;
+
+    // hides with the overlay while another program is in front
+    function update() {
+      const away = awayNow(view, settings);
+      open.hidden = away;
+      if (clickable === away) {
+        clickable = !away;
+        invoke('set_clickable', { clickable });
+      }
+    }
+
+    open.addEventListener('click', () => invoke('show_settings'));
+    Promise.all([
+      listen('view', (event) => { view = event.payload; update(); }),
+      listen('settings', (event) => { settings = event.payload; update(); }),
+    ]).then(() => {
+      invoke('snapshot').then((next) => { view = next; update(); });
+      invoke('settings').then((next) => { settings = next; update(); });
+    });
+  </script>
+</body>
+</html>

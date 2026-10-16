@@ -1,8 +1,10 @@
 //! The character's skill bar, from NC's public character API (the same one the
 //! checklist site's armory uses). Packets give us the name; this gives us icons.
+//! The same API names other classes' skills, which is how their buffs get names.
 
+use std::collections::HashMap;
 use std::path::Path;
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -13,6 +15,12 @@ const SEARCH: &str = "https://api-search.plaync.com/aion2global/search/v2/charac
 const REGIONS: [&str; 5] = ["nae", "naw", "eu", "la", "as"];
 const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
 const CACHE_FILE: &str = "loadout.json";
+const CLASSES_FILE: &str = "class-skills.json";
+/// Classes only change with patches
+const CLASSES_MAX_AGE: Duration = Duration::from_secs(7 * 24 * 60 * 60);
+/// A search on the character's server that turns up every class
+const CLASSES_KEYWORD: &str = "a";
+const CLASSES_PAGES: u32 = 3;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Skill {
@@ -29,6 +37,9 @@ pub struct Loadout {
     pub bar: Vec<Skill>,
     /// Every active skill of the class, for casts of something not on the bar
     pub known: Vec<Skill>,
+    /// Never cast, but some put a buff on us when they go off
+    #[serde(default)]
+    pub passive: Vec<Skill>,
 }
 
 #[derive(Deserialize)]
@@ -56,6 +67,9 @@ struct SearchRow {
     name: String,
     #[serde(rename = "serverId")]
     server: u16,
+    /// Class, race and gender, four to a class
+    #[serde(rename = "pcId", default)]
+    pc_id: u32,
 }
 
 #[derive(Deserialize)]
@@ -84,8 +98,12 @@ struct SkillRow {
     equip: Value,
 }
 
+fn agent() -> ureq::Agent {
+    ureq::AgentBuilder::new().timeout(Duration::from_secs(10)).user_agent(USER_AGENT).build()
+}
+
 pub fn fetch(name: &str, server: u16) -> Result<Loadout, String> {
-    let agent = ureq::AgentBuilder::new().timeout(Duration::from_secs(10)).user_agent(USER_AGENT).build();
+    let agent = agent();
     let server_id = server.to_string();
     let region = region_of(&agent, server)?;
 
@@ -101,12 +119,7 @@ pub fn fetch(name: &str, server: u16) -> Result<Loadout, String> {
         .ok_or_else(|| format!("{name} isn't on NC's character search"))?;
     let character_id = percent_decode(&row.id);
 
-    let equipment: Equipment = get(
-        &agent,
-        &format!("{SITE}/api/character/equipment"),
-        &[("lang", "en-US"), ("region", region), ("serverId", &server_id), ("characterId", &character_id)],
-    )?;
-    let rows = equipment.skill.map(|s| s.list).unwrap_or_default();
+    let rows = skill_list(&agent, region, &server_id, &character_id)?;
     let skill = |r: &SkillRow| Skill { id: r.id, name: r.name.clone(), icon: r.icon.clone() };
     let active = |r: &&SkillRow| matches!(r.category.as_str(), "Active" | "Dp");
     Ok(Loadout {
@@ -114,7 +127,65 @@ pub fn fetch(name: &str, server: u16) -> Result<Loadout, String> {
         server,
         bar: rows.iter().filter(active).filter(|r| truthy(&r.acquired) && truthy(&r.equip)).map(skill).collect(),
         known: rows.iter().filter(active).map(skill).collect(),
+        passive: rows.iter().filter(|r| r.category == "Passive").map(skill).collect(),
     })
+}
+
+fn skill_list(agent: &ureq::Agent, region: &str, server_id: &str, character_id: &str) -> Result<Vec<SkillRow>, String> {
+    let equipment: Equipment = get(
+        agent,
+        &format!("{SITE}/api/character/equipment"),
+        &[("lang", "en-US"), ("region", region), ("serverId", server_id), ("characterId", character_id)],
+    )?;
+    Ok(equipment.skill.map(|s| s.list).unwrap_or_default())
+}
+
+/// Every class's skills. A character's list on NC's site has all of its class's
+/// skills, learned or not, so one character of each class is enough.
+pub fn fetch_classes(server: u16) -> Result<Vec<Skill>, String> {
+    let agent = agent();
+    let server_id = server.to_string();
+    let region = region_of(&agent, server)?;
+    // class -> a character of it
+    let mut picked: HashMap<u32, String> = HashMap::new();
+    for page in 1..=CLASSES_PAGES {
+        let page = page.to_string();
+        let search: Search = get(
+            &agent,
+            SEARCH,
+            &[("keyword", CLASSES_KEYWORD), ("region", region), ("serverId", &server_id), ("localeInfo", "en-US"), ("page", &page), ("size", "30")],
+        )?;
+        for row in search.list.into_iter().filter(|r| r.server == server && r.pc_id >= 5) {
+            picked.entry((row.pc_id - 5) / 4).or_insert_with(|| percent_decode(&row.id));
+        }
+        if picked.len() >= 8 {
+            break;
+        }
+    }
+    let mut skills: Vec<Skill> = Vec::new();
+    for character in picked.values() {
+        for row in skill_list(&agent, region, &server_id, character)? {
+            if !skills.iter().any(|s| s.id == row.id) {
+                skills.push(Skill { id: row.id, name: row.name, icon: row.icon });
+            }
+        }
+    }
+    Ok(skills)
+}
+
+/// The saved class skills, and whether they're recent enough to keep
+pub fn load_classes(dir: &Path) -> Option<(Vec<Skill>, bool)> {
+    let path = dir.join(CLASSES_FILE);
+    let skills = serde_json::from_slice(&std::fs::read(&path).ok()?).ok()?;
+    let saved = std::fs::metadata(&path).ok()?.modified().ok()?;
+    let fresh = SystemTime::now().duration_since(saved).is_ok_and(|age| age < CLASSES_MAX_AGE);
+    Some((skills, fresh))
+}
+
+pub fn save_classes(dir: &Path, skills: &[Skill]) {
+    if let Ok(json) = serde_json::to_vec(skills) {
+        let _ = std::fs::write(dir.join(CLASSES_FILE), json);
+    }
 }
 
 fn region_of(agent: &ureq::Agent, server: u16) -> Result<&'static str, String> {

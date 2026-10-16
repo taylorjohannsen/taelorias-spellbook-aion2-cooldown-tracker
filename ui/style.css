@@ -1,25 +1,43 @@
-:root {
-  --size: 42px;
-  --gap: 1px;
-}
-
 html,
 body {
   margin: 0;
   height: 100%;
   overflow: hidden;
   background: transparent;
-  user-select: none;
-  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+/* hidden by the Show setting: fades out slowly, comes back at once */
+#overlay .bar,
+#overlay .trackers {
+  transition: opacity 0.15s;
+}
+
+#overlay.faded .bar,
+#overlay.faded .trackers {
+  opacity: var(--hidden-opacity, 0);
+  transition: opacity 0.8s;
 }
 
 #overlay {
-  box-sizing: border-box;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 8px;
+  opacity: var(--opacity, 1);
+}
+
+/* another program is in front */
+body.away #overlay {
+  visibility: hidden;
+}
+
+/* an empty buffs window still needs something to grab while it's moved */
+#overlay .placeholder {
+  display: none;
+  padding: 6px 10px;
+  color: #e6e9ef;
+  font: 12px "Segoe UI", system-ui, sans-serif;
+  text-shadow: 0 0 2px #000, 0 0 2px #000;
+}
+
+body.unlocked #overlay.empty .placeholder {
+  display: block;
 }
 
 body.unlocked #overlay {
@@ -32,91 +50,4 @@ body.unlocked #overlay {
 /* clicks land on the overlay itself, which is the drag handle */
 body.unlocked #overlay > * {
   pointer-events: none;
-}
-
-#bar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--gap);
-  max-width: 100%;
-}
-
-.icon {
-  position: relative;
-  box-sizing: border-box;
-  width: var(--size);
-  height: var(--size);
-  overflow: hidden;
-  border: 1px solid #000;
-  background: #15181f;
-}
-
-.icon img {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.icon .label {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #9aa3b2;
-  font-size: 10px;
-}
-
-.icon .sweep,
-.icon .time {
-  position: absolute;
-  inset: 0;
-  display: none;
-}
-
-.icon .sweep {
-  background: conic-gradient(transparent var(--elapsed, 0deg), rgba(0, 0, 0, 0.72) 0);
-}
-
-.icon .time {
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  text-shadow: 0 0 2px #000, 0 0 2px #000, 1px 1px 0 #000;
-}
-
-.icon.cooling .sweep {
-  display: block;
-}
-
-.icon.cooling .time {
-  display: flex;
-}
-
-.icon.ready {
-  animation: ready 0.4s ease-out;
-}
-
-@keyframes ready {
-  from {
-    filter: brightness(1.9);
-  }
-}
-
-#status {
-  margin-top: 4px;
-  color: #e6e9ef;
-  font-size: 12px;
-  text-shadow: 0 0 2px #000, 0 0 2px #000;
-}
-
-#status.error {
-  color: #ff8a80;
-}
-
-#status:empty {
-  display: none;
 }

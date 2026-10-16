@@ -1,0 +1,178 @@
+/* Buff trackers, drawn the same way in the buffs window and the settings preview.
+   --left is the part of a buff that's left, from 1 to 0. The row or column is
+   always the size of every tracked buff, so the window never resizes, and the
+   ones on show gather in the middle of a row or at one end of a column. Bars
+   are always a column; boxes can be either. */
+
+.buffs-frame {
+  box-sizing: border-box;
+  width: max-content;
+  padding: 4px;
+}
+
+.trackers {
+  --buff-size: 36px;
+  --buff-bar-width: 180px;
+  --radius: 0px;
+  --gap: 1px;
+  --count: 0;
+  --icon-gap: 3px;
+  display: flex;
+  justify-content: center;
+  gap: var(--gap);
+  width: calc(var(--count) * var(--buff-size) + (var(--count) - 1) * var(--gap));
+  height: var(--buff-size);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  user-select: none;
+}
+
+.trackers.column {
+  flex-direction: column;
+  justify-content: flex-start;
+  width: var(--buff-size);
+  height: calc(var(--count) * var(--buff-size) + (var(--count) - 1) * var(--gap));
+}
+
+.trackers.bars {
+  width: calc(var(--buff-size) + var(--icon-gap) + var(--buff-bar-width));
+}
+
+/* the first sits at the bottom, and the rest stack up from it */
+.trackers.column.up {
+  flex-direction: column-reverse;
+}
+
+.tracker {
+  display: flex;
+  align-items: center;
+  gap: var(--icon-gap);
+  transition: opacity 0.2s, filter 0.2s;
+}
+
+.tracker.gone {
+  display: none;
+}
+
+.tracker.missing {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+.tracker-icon {
+  position: relative;
+  box-sizing: border-box;
+  flex: none;
+  width: var(--buff-size);
+  height: var(--buff-size);
+  overflow: hidden;
+  border: 1px solid #000;
+  border-radius: var(--radius);
+  background: #15181f;
+}
+
+.tracker-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.tracker-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9aa3b2;
+  font-size: calc(var(--buff-size) * 0.32);
+  font-weight: 700;
+}
+
+/* the time that's gone darkens, like a cooldown in reverse */
+.tracker-sweep {
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(rgba(0, 0, 0, 0.65) calc((1 - var(--left, 1)) * 360deg), transparent 0);
+}
+
+.tracker-time {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: calc(var(--buff-size) * 0.36);
+  font-weight: 700;
+  text-shadow: 0 0 2px #000, 0 0 2px #000, 1px 1px 0 #000;
+}
+
+.tracker-bar {
+  display: none;
+}
+
+.trackers.bars .tracker-sweep,
+.trackers.bars .tracker-time {
+  display: none;
+}
+
+.trackers.bars .tracker-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  width: var(--buff-bar-width);
+  height: var(--buff-size);
+  padding: 0 7px;
+  overflow: hidden;
+  border: 1px solid #000;
+  border-radius: var(--radius);
+  background: linear-gradient(to right, #3b6fd0 calc(var(--left, 1) * 100%), rgba(10, 12, 16, 0.78) 0);
+  color: #fff;
+  font-size: calc(var(--buff-size) * 0.38);
+  font-weight: 600;
+  white-space: nowrap;
+  text-shadow: 0 0 2px #000, 1px 1px 0 #000;
+}
+
+.tracker-bar > span {
+  position: relative;
+  z-index: 1;
+}
+
+/* running out: a red outline, flashing until it's gone */
+.tracker-icon::after,
+.tracker-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 2px #ff4040;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tracker.ending .tracker-icon::after,
+.tracker.ending .tracker-bar::after {
+  animation: ending 1s ease-out infinite;
+}
+
+@keyframes ending {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.4;
+  }
+}
+
+.tracker-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tracker-left {
+  flex: none;
+  margin-left: 8px;
+}

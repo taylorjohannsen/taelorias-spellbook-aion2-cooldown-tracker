@@ -27,7 +27,14 @@ pub fn run(overlay: Overlay) {
         .iter()
         .map(|&(id, name, icon)| Skill { id, name: name.into(), icon: format!("{ICONS}/{icon}.png") })
         .collect();
-    overlay.set_loadout(Loadout { name: "Demo".into(), server: 0, bar: bar.clone(), known: bar });
+    overlay.set_loadout(Loadout { name: "Demo".into(), server: 0, bar: bar.clone(), known: bar, passive: Vec::new() });
+    // in front and fighting the whole time, so it shows whatever the bar is set to show
+    overlay.update(|v| {
+        v.traffic = true;
+        v.connected = true;
+        v.focused = true;
+    });
+    overlay.apply(Update::Combat(true));
 
     let mut seed = epoch_ms() as u32 | 1;
     let mut random = move |n: u32| {

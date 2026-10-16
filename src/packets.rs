@@ -6,8 +6,18 @@ use crate::wire::{varint, Reader};
 pub const SELF_INFO: u16 = 0x3336;
 pub const CAST: u16 = 0x0238;
 pub const COOLDOWNS: u16 = 0x4738;
+pub const MAP_LOAD: u16 = 0x2136;
+pub const BATTLE: u16 = 0x218D;
+/// A buff landing, then BUFF_REFRESH as it's renewed. The first carries one more byte.
+pub const BUFF: u16 = 0x2A38;
+pub const BUFF_REFRESH: u16 = 0x2B38;
+/// A buff ending, sent either way. The second carries one more byte.
+pub const BUFF_END: u16 = 0x1A92;
+pub const BUFF_GONE: u16 = 0x0E92;
 
 const MAX_COOLDOWN_MS: u32 = 3_600_000;
+/// Anything longer is a buff that lasts until it's taken off
+const MAX_BUFF_MS: u32 = 86_400_000;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Event {
@@ -17,6 +27,13 @@ pub enum Event {
     Cast { actor: u32, target: u32, skill: u32, cooldown_ms: u32 },
     /// Running cooldowns of our own skills moved: (skill, ms left)
     Cooldowns(Vec<(u32, u32)>),
+    /// A map loaded: a loading screen, or a teleport within the same map
+    Map(u32),
+    /// Someone went in or out of combat, us included, as the server sees it
+    Battle { entity: u32, on: bool },
+    /// A buff or debuff landed on someone. 0 ms is one that lasts until it's removed.
+    Buff { target: u32, buff: u32, duration_ms: u32 },
+    BuffEnd { target: u32, buff: u32 },
 }
 
 pub fn parse(opcode: u16, body: &[u8]) -> Option<Event> {
@@ -24,8 +41,19 @@ pub fn parse(opcode: u16, body: &[u8]) -> Option<Event> {
         SELF_INFO => self_info(body),
         CAST => cast(body),
         COOLDOWNS => cooldowns(body),
+        MAP_LOAD => map_load(body),
+        BATTLE => battle(body),
+        BUFF => buff(body, true),
+        BUFF_REFRESH => buff(body, false),
+        BUFF_END => buff_end(body, false),
+        BUFF_GONE => buff_end(body, true),
         _ => None,
     }
+}
+
+/// Instanced dungeons live in the 6xxxxx map range
+pub fn is_dungeon(map: u32) -> bool {
+    (600_000..700_000).contains(&map)
 }
 
 /// Our character record also rides inside other packets, sometimes in an LZ4 bundle
@@ -80,6 +108,26 @@ fn bundled_self(b: &[u8]) -> Option<Event> {
 /// NC's site and the skill bar use
 pub fn base_skill(skill: u32) -> u32 {
     skill / 10_000 * 10_000
+}
+
+/// The class a skill belongs to, from the first two digits of its id (11 to 19),
+/// or 0 for anything else
+pub fn class_of(skill: u32) -> u32 {
+    if (11_000_000..20_000_000).contains(&skill) {
+        skill / 1_000_000
+    } else {
+        0
+    }
+}
+
+/// What a buff is tracked by: the skill behind it, so a change of
+/// specialization keeps tracking it, or the buff itself when no skill is
+pub fn buff_key(buff: u32) -> u32 {
+    if buff >= 100_000_000 {
+        base_skill(buff / 10)
+    } else {
+        buff
+    }
 }
 
 fn is_entity(id: u32) -> bool {
@@ -147,6 +195,55 @@ fn cast(b: &[u8]) -> Option<Event> {
     }
     let cooldown_ms = r.varint().filter(|&ms| ms <= MAX_COOLDOWN_MS)?;
     Some(Event::Cast { actor, target, skill, cooldown_ms })
+}
+
+/// loads u32, map u32, ...
+fn map_load(b: &[u8]) -> Option<Event> {
+    let mut r = Reader::new(b);
+    r.u32()?;
+    let map = r.u32().filter(|&m| (1..10_000_000).contains(&m))?;
+    Some(Event::Map(map))
+}
+
+/// entity varint, varint, 1 in combat / 0 out, [deadline u64 when a timed boss is pulled]
+fn battle(b: &[u8]) -> Option<Event> {
+    let mut r = Reader::new(b);
+    let entity = r.varint().filter(|&id| is_entity(id))?;
+    r.varint()?;
+    let on = match r.varint()? {
+        0 => false,
+        1 => true,
+        _ => return None,
+    };
+    matches!(r.remaining(), 0 | 8).then_some(Event::Battle { entity, on })
+}
+
+/// target varint, [u8, always 1, if `flagged`], varint, instance varint, buff u32,
+/// duration ms u32, u32, started u64, caster varint, ...
+fn buff(b: &[u8], flagged: bool) -> Option<Event> {
+    let mut r = Reader::new(b);
+    let target = r.varint().filter(|&id| is_entity(id))?;
+    if flagged {
+        r.u8()?;
+    }
+    r.varint()?;
+    r.varint()?;
+    let buff = r.u32().filter(|&id| id != 0)?;
+    let duration = r.u32()?;
+    r.skip(12)?;
+    let duration_ms = if duration > MAX_BUFF_MS { 0 } else { duration };
+    Some(Event::Buff { target, buff, duration_ms })
+}
+
+/// target varint, [u8, always 1, if `flagged`], buff u32
+fn buff_end(b: &[u8], flagged: bool) -> Option<Event> {
+    let mut r = Reader::new(b);
+    let target = r.varint().filter(|&id| is_entity(id))?;
+    if flagged {
+        r.u8()?;
+    }
+    let buff = r.u32().filter(|&id| id != 0)?;
+    (r.remaining() == 0).then_some(Event::BuffEnd { target, buff })
 }
 
 /// count u8, count × (skill u32, ms left varint)
@@ -229,6 +326,45 @@ mod tests {
         body.push(0);
         assert_eq!(parse(COOLDOWNS, &body), Some(Event::Cooldowns(vec![(18_010_000, 14_300), (18_040_000, 0)])));
         assert_eq!(parse(COOLDOWNS, &body[..body.len() - 1]), None);
+    }
+
+    // Our own toggles from a Global capture of 2026-10-15; the timed boss (Ferocious
+    // Horn Nuakum) and the plain one are from cyberbadger6969/aion2-dps-meter
+    #[test]
+    fn combat_toggles() {
+        assert_eq!(parse(BATTLE, &hex("c8330001")), Some(Event::Battle { entity: 6600, on: true }));
+        assert_eq!(parse(BATTLE, &hex("c8330000")), Some(Event::Battle { entity: 6600, on: false }));
+        assert_eq!(parse(BATTLE, &hex("f19702 01 01 ea66962da1010000")), Some(Event::Battle { entity: 35825, on: true }));
+        assert_eq!(parse(BATTLE, &hex("fb3e0001")), Some(Event::Battle { entity: 8059, on: true }));
+        assert_eq!(parse(BATTLE, &hex("c8330002")), None);
+        assert_eq!(parse(BATTLE, &hex("c833000100")), None);
+    }
+
+    // Our own Wish of Concentration landing, a Chanter's aura being renewed on us, and
+    // Winter's Shackles and Element Enhancement ending, Global 2026-10-15
+    #[test]
+    fn buffs() {
+        let wish = hex("bf37 01 13 d907 a5282009 50460000 00000000 66e28441a1010000 bf37 01aa9de90000 360f0747 4d2a0ec7 12ddc246");
+        assert_eq!(parse(BUFF, &wish), Some(Event::Buff { target: 7103, buff: 153_102_501, duration_ms: 18_000 }));
+        let aura = hex("9b1a 13 38 d3ffd20a 60090000 00000000 11b98d41a1010000 fb52 0a95191501 02 3c61af46 142725c5 6aac27c6");
+        assert_eq!(parse(BUFF_REFRESH, &aura), Some(Event::Buff { target: 3355, buff: 181_600_211, duration_ms: 2_400 }));
+        let forever = hex("9b1a 11 8a0a 91e2f505 ffffffff ffffffff 8075d52abb030000 9b1a 0100");
+        assert_eq!(parse(BUFF_REFRESH, &forever), Some(Event::Buff { target: 3355, buff: 100_000_401, duration_ms: 0 }));
+        assert_eq!(parse(BUFF_END, &hex("bf37 8d9b0109")), Some(Event::BuffEnd { target: 7103, buff: 151_100_301 }));
+        assert_eq!(parse(BUFF_END, &hex("bf37 8d9b010900")), None);
+        assert_eq!(parse(BUFF_GONE, &hex("bf37 01 11dc2d09")), Some(Event::BuffEnd { target: 7103, buff: 154_000_401 }));
+        assert_eq!(buff_key(154_000_401), 15_400_000);
+        assert_eq!(buff_key(153_102_501), 15_310_000);
+        assert_eq!(buff_key(3_015), 3_015);
+    }
+
+    #[test]
+    fn map_loads() {
+        let mut body = 1u32.to_le_bytes().to_vec();
+        body.extend(600_092u32.to_le_bytes());
+        assert_eq!(parse(MAP_LOAD, &body), Some(Event::Map(600_092)));
+        assert!(is_dungeon(600_092) && !is_dungeon(1110));
+        assert_eq!(parse(MAP_LOAD, &body[..6]), None);
     }
 
     #[test]

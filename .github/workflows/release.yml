@@ -1,0 +1,55 @@
+name: Release
+
+# Pushing a version tag like v0.2.0 builds the installer and publishes it as a
+# GitHub release, along with the latest.json that installed copies check on start.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the tag matches Cargo.toml
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
+          if ("v$version" -ne "${{ github.ref_name }}") { throw "Cargo.toml says $version but the tag is ${{ github.ref_name }}" }
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build the installer
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: npx --yes @tauri-apps/cli@2 build
+
+      - name: Publish the release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart("v")
+          $name = "tjcd_${version}_x64-setup.exe"
+          $setup = "target/release/bundle/nsis/$name"
+          @{
+            version = $version
+            pub_date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+            platforms = @{
+              "windows-x86_64" = @{
+                signature = (Get-Content "$setup.sig" -Raw).Trim()
+                url = "https://github.com/${{ github.repository }}/releases/download/$tag/$name"
+              }
+            }
+          } | ConvertTo-Json -Depth 4 | Set-Content latest.json -Encoding utf8NoBOM
+          gh release create $tag $setup latest.json --title "tjcd $version" --generate-notes

@@ -1,0 +1,211 @@
+/* The skill bar, drawn the same way in the overlay and the settings preview.
+   .frame sizes itself to the boxes, and the overlay window follows it. */
+
+.frame {
+  --icon-w: 42px;
+  --icon-h: 42px;
+  --icon-min: min(var(--icon-w), var(--icon-h));
+  --radius: 0px;
+  --gap: 1px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  padding: 4px;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  user-select: none;
+}
+
+.frame .bar {
+  display: flex;
+  gap: var(--gap);
+}
+
+.frame.vertical .bar {
+  flex-direction: column;
+}
+
+.frame .icon {
+  position: relative;
+  box-sizing: border-box;
+  flex: none;
+  width: var(--icon-w);
+  height: var(--icon-h);
+  overflow: hidden;
+  border: 1px solid #000;
+  border-radius: var(--radius);
+  background: #15181f;
+}
+
+.frame .icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.frame .icon .label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9aa3b2;
+  font-size: calc(var(--icon-min) * 0.24);
+}
+
+.frame .icon .sweep,
+.frame .icon .time {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+
+.frame .icon .sweep {
+  background: conic-gradient(transparent var(--elapsed, 0deg), rgba(0, 0, 0, 0.72) 0);
+}
+
+/* a cast: the box dips and a ring flashes over it */
+.frame .icon .ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 0 0 2px #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.frame .icon.cast .ring {
+  animation: cast 0.35s ease-out;
+}
+
+.frame .icon.cast img,
+.frame .icon.cast .label {
+  animation: cast-dip 0.35s ease-out;
+}
+
+/* back from cooldown, for the skills picked: a gold ring holds a moment while
+   a glint crosses the box, which pops a little */
+.frame .icon .pulse {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  background: rgba(255, 214, 70, 0.22);
+  box-shadow: inset 0 0 0 2px #ffe066, inset 0 0 12px rgba(255, 200, 40, 0.95);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.frame .icon .pulse::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background: linear-gradient(115deg, transparent 38%, rgba(255, 248, 210, 0.95) 50%, transparent 62%);
+  transform: translateX(-110%);
+}
+
+.frame .icon.pulsing .pulse {
+  animation: ready-ring 0.8s ease-out;
+}
+
+.frame .icon.pulsing .pulse::after {
+  animation: ready-shine 0.55s ease-out;
+}
+
+.frame .icon.pulsing img,
+.frame .icon.pulsing .label {
+  animation: ready-pop 0.35s ease-out;
+}
+
+@keyframes ready-ring {
+  0%,
+  35% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ready-shine {
+  to {
+    transform: translateX(110%);
+  }
+}
+
+@keyframes ready-pop {
+  from {
+    transform: scale(1.14);
+  }
+}
+
+@keyframes cast {
+  from {
+    opacity: 1;
+  }
+}
+
+@keyframes cast-dip {
+  from {
+    transform: scale(0.8);
+  }
+}
+
+.frame .icon .time {
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: calc(var(--icon-min) * 0.38);
+  font-weight: 700;
+  text-shadow: 0 0 2px #000, 0 0 2px #000, 1px 1px 0 #000;
+}
+
+.frame .icon .key {
+  position: absolute;
+  top: 1px;
+  left: 3px;
+  color: #fff;
+  font-size: calc(var(--icon-min) * 0.26);
+  font-weight: 600;
+  line-height: 1.1;
+  text-shadow: 0 0 2px #000, 0 0 2px #000, 1px 1px 0 #000;
+}
+
+.frame .icon .key:empty {
+  display: none;
+}
+
+.frame .icon.cooling .sweep {
+  display: block;
+}
+
+.frame .icon.cooling .time {
+  display: flex;
+}
+
+.frame .icon.ready {
+  animation: ready 0.4s ease-out;
+}
+
+@keyframes ready {
+  from {
+    filter: brightness(1.9);
+  }
+}
+
+.frame .status {
+  margin-top: 4px;
+  color: #e6e9ef;
+  font-size: 12px;
+  text-shadow: 0 0 2px #000, 0 0 2px #000;
+}
+
+.frame .status.error {
+  color: #ff8a80;
+}
+
+.frame .status:empty {
+  display: none;
+}

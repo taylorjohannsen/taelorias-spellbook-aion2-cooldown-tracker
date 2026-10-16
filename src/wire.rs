@@ -36,6 +36,10 @@ impl<'a> Reader<'a> {
         Some(s)
     }
 
+    pub fn remaining(&self) -> usize {
+        self.b.len() - self.o
+    }
+
     pub fn skip(&mut self, n: usize) -> Option<()> {
         self.take(n).map(|_| ())
     }

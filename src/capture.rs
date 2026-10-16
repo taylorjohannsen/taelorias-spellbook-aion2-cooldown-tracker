@@ -101,6 +101,7 @@ fn decode(rx: Receiver<Frame>, overlay: Overlay, trace: bool) {
         streams.push(segment, Instant::now(), &mut |key, opcode, body| {
             if game.insert(*key) {
                 overlay.log(format!("game traffic: {key}"));
+                overlay.update(|v| v.traffic = true);
             }
             if trace {
                 *counts.entry(opcode).or_default() += 1;
