@@ -2,7 +2,21 @@
 
 Cooldown and buff overlay for AION 2 Global. Reads the game's network traffic through Npcap, like the DPS meters, and never touches the game client.
 
-<img src="docs/overlay.webp" width="540" alt="The cooldown bar with buff trackers above it, counting down in a fight">
+<img src="docs/overlay.webp" width="540" alt="The cooldown bar with buff trackers above it, counting down in a boss fight">
+
+## Features
+
+- Your cooldowns in a bar you can put anywhere
+- Horizontal or vertical, with your pick of box size, corners, spacing and opacity
+- Choose which abilities show, and drag them into order
+- Your keybind on each ability
+- A flash when you use an ability, and a gold shine when it's ready again
+- Show it always, only in combat, only in dungeons, or only in dungeon fights
+- Hides when another window is in front of the game
+- Tracks buffs on you as boxes or bars, with a red outline when one is about to run out
+- A separate buff list for each class
+- Names and icons for buffs from your party
+- Starts with Windows if you want, and updates itself
 
 ## Install
 
@@ -15,13 +29,13 @@ Spellbook updates itself when it starts. If you had it from when it was called t
 
 Start it before logging in, or change zone or use a couple of skills once you're in.
 
-<img src="docs/gameplay.webp" width="720" alt="Spellbook's bar and buff trackers under a Sorcerer at a training dummy">
+<img src="docs/gameplay.webp" width="720" alt="Spellbook's bar and buff trackers under a Sorcerer fighting a boss">
 
 Open the settings with the gear in the bottom-left corner of your screen, which shows while the game is in front, or from Spellbook's tray icon. To move the bar or the buffs window, click Unlock at the top of the settings, drag them where you want, then lock them again.
 
-<img src="docs/settings.gif" width="420" alt="The settings window, resizing the boxes and switching the bar to vertical">
+<img src="docs/settings.webp" width="420" alt="The settings window, resizing the boxes and switching the bar to vertical">
 
-The settings change the bar's direction, the size and corners of each box, which abilities show in what order, and whether the bar shows only in combat or in dungeons. The game doesn't share its keybinds, so each ability's key is set there too, and the ✦ next to it makes the ability shine gold when it comes off cooldown. The Buffs tab tracks buffs on you, as boxes or bars, in a window of their own, with a list for each class. The overlay hides while another window is in front of the game, unless that's turned off.
+The game doesn't share its keybinds, so set each ability's key in the Abilities tab. The ✦ next to it turns on the gold shine. Buffs to track are picked in the Buffs tab.
 
 ## Build
 
