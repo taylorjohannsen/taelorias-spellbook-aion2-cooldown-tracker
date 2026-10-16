@@ -25,15 +25,6 @@ cargo run --release
 
 `--demo` shows fake casts without the game. `--trace` logs every cast to `%APPDATA%\tjcd\tjcd.log`.
 
-To release, bump `version` in `Cargo.toml`, commit, then tag and push it:
-
-```sh
-git tag v0.2.0
-git push origin v0.2.0
-```
-
-GitHub Actions builds the installer and publishes the release, and installed copies update on their next start. Updates are signed with the key in the `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` repository secrets.
-
 ## Disclaimer
 
 tjcd isn't affiliated with NCSOFT. It only reads network traffic, like the DPS meters, and never touches the game. Use it at your own risk.
