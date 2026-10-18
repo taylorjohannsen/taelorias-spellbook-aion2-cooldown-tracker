@@ -44,7 +44,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERFNEQ0RjQwNzAwMTU1NTcKUldSWFZRRndRRTlOM3RLZnhOVG5LNnNzcS8zZHFjQ1hrVzB3UnE0TlMxQlo2S1dMUHRlV0s4cVcK",
       "endpoints": [
-        "https://github.com/taylorjohannsen/tjcd/releases/latest/download/latest.json"
+        "https://github.com/taylorjohannsen/taelorias-spellbook-aion2-cooldown-tracker/releases/latest/download/latest.json"
       ],
       "windows": {
         "installMode": "passive"

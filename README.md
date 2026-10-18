@@ -21,7 +21,7 @@ Cooldown and buff overlay for AION 2 Global. Reads the game's network traffic th
 ## Install
 
 1. Install [Npcap](https://npcap.com/#download).
-2. Download `Spellbook_x.y.z_x64-setup.exe` from the [latest release](https://github.com/taylorjohannsen/tjcd/releases/latest) and run it. Windows may warn that it's from an unknown publisher: click More info, then Run anyway.
+2. Download `Spellbook_x.y.z_x64-setup.exe` from the [latest release](https://github.com/taylorjohannsen/taelorias-spellbook-aion2-cooldown-tracker/releases/latest) and run it. Windows may warn that it's from an unknown publisher: click More info, then Run anyway.
 
 Spellbook updates itself when it starts. If you had it from when it was called tjcd, the update moves your settings over and removes tjcd.
 
